@@ -1,8 +1,11 @@
 package com.ankur_anand.pokedex.ui.screens.detail
 
 import android.app.Activity
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -15,10 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,9 +34,7 @@ import com.ankur_anand.pokedex.R
 import com.ankur_anand.pokedex.data.remote.response.Pokemon
 import com.ankur_anand.pokedex.data.remote.response.Pokemon.Type
 import com.ankur_anand.pokedex.ui.screens.detail.DetailScreenState.PokemonData
-import com.ankur_anand.pokedex.utils.capitalizeFirstLetter
-import com.ankur_anand.pokedex.utils.parseTypeToColor
-import com.ankur_anand.pokedex.utils.setDetailStatusBarAndIconColor
+import com.ankur_anand.pokedex.utils.*
 
 @Composable
 fun DetailScreen(
@@ -66,7 +70,7 @@ fun DetailScreen(
 
             AppBar(onBackPressed = onBackPressed)
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(100.dp))
 
             when (viewModel.uiState) {
                 is DetailScreenState.Error -> {
@@ -139,33 +143,36 @@ fun PokemonCard(
 
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(end = 24.dp, start = 24.dp, bottom = 24.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.background)
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(16.dp)
             ) {
                 Spacer(modifier = Modifier.height(48.dp))
 
-                Text(
-                    text = stringResource(
-                        id = R.string.pokemon_id_name,
-                        pokemon.id,
-                        pokemon.name.capitalizeFirstLetter()
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    fontSize = 24.sp
-                )
+                PokemonName(name = pokemon.name.capitalizeFirstLetter(), id = pokemon.id)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 PokemonType(pokemon.types)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                PokemonDetailData(
+                    pokemonHeight = pokemon.height,
+                    pokemonWeight = pokemon.weight
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                PokemonBaseStats(pokemonInfo = pokemon)
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
@@ -174,6 +181,75 @@ fun PokemonCard(
             name = pokemon.name.capitalizeFirstLetter(),
             modifier = Modifier.align(Alignment.TopCenter)
         )
+    }
+}
+
+@Composable
+fun PokemonDetailData(
+    pokemonHeight: Int,
+    pokemonWeight: Int,
+    modifier: Modifier = Modifier
+) {
+
+    //hectogram to kilogram
+    val pokemonWeightInKg = remember {
+        pokemonWeight / 10f
+    }
+
+    //decimeters to meter
+    val pokemonHeightInMeter = remember {
+        pokemonHeight / 10f
+    }
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+
+        PokemonDetailItem(
+            detailValue = pokemonWeightInKg,
+            detailUnit = stringResource(R.string.unit_kilogram),
+            icon = painterResource(id = R.drawable.ic_weight),
+        )
+
+        Spacer(
+            modifier = Modifier
+                .size(1.dp, 70.dp)
+                .background(Color.LightGray)
+        )
+
+        PokemonDetailItem(
+            detailValue = pokemonHeightInMeter,
+            detailUnit = stringResource(R.string.unit_meter),
+            icon = painterResource(id = R.drawable.ic_height),
+        )
+    }
+
+
+}
+
+@Composable
+fun PokemonDetailItem(
+    detailValue: Float,
+    detailUnit: String,
+    icon: Painter,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = icon,
+            contentDescription = if (detailUnit == "Kg") stringResource(id = R.string.pokemon_weight)
+            else stringResource(id = R.string.pokemon_height)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(text = "$detailValue $detailUnit")
     }
 }
 
@@ -213,6 +289,21 @@ fun PokemonType(
 }
 
 @Composable
+fun PokemonName(
+    name: String,
+    id: Int,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = stringResource(id = R.string.pokemon_id_name, id, name),
+        modifier = modifier.fillMaxWidth(),
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        fontSize = 24.sp
+    )
+}
+
+@Composable
 private fun PokemonImage(
     modifier: Modifier,
     id: Int,
@@ -228,6 +319,98 @@ private fun PokemonImage(
             id = R.string.pokemon_image, name
         )
     )
+}
+
+@Composable
+fun PokemonStat(
+    statName: String,
+    statValue: Int,
+    statMaxValue: Int,
+    statColor: Color,
+    height: Dp = 28.dp,
+    animDuration: Int = 1000,
+    animDelay: Int = 0
+) {
+    var animationPlayed by remember {
+        mutableStateOf(false)
+    }
+    val curPercent = animateFloatAsState(
+        targetValue = if (animationPlayed) {
+            statValue / statMaxValue.toFloat()
+        } else 0f,
+        animationSpec = tween(
+            animDuration,
+            animDelay
+        )
+    )
+    LaunchedEffect(key1 = true) {
+        animationPlayed = true
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(CircleShape)
+            .background(
+                if (isSystemInDarkTheme()) {
+                    Color(0xFF505050)
+                } else {
+                    Color.LightGray
+                }
+            )
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(curPercent.value)
+                .clip(CircleShape)
+                .background(statColor)
+                .padding(horizontal = 8.dp)
+        ) {
+            Text(
+                text = statName,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = (curPercent.value * statMaxValue).toInt().toString(),
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun PokemonBaseStats(
+    pokemonInfo: Pokemon,
+    animDelayPerItem: Int = 100
+) {
+    val maxBaseStat = remember {
+        pokemonInfo.stats.maxOf { it.baseStat }
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Base stats:",
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        for (i in pokemonInfo.stats.indices) {
+            val stat = pokemonInfo.stats[i]
+            PokemonStat(
+                statName = parseStatToAbbr(stat),
+                statValue = stat.baseStat,
+                statMaxValue = maxBaseStat,
+                statColor = parseStatToColor(stat),
+                animDelay = i * animDelayPerItem
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
 }
 
 @Composable

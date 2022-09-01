@@ -9,6 +9,7 @@ import com.ankur_anand.pokedex.data.local.PokemonDatabase
 import com.ankur_anand.pokedex.data.model.PokedexListEntry
 import com.ankur_anand.pokedex.data.model.PokedexListRemoteKeys
 import com.ankur_anand.pokedex.data.remote.ApiService
+import com.ankur_anand.pokedex.data.remote.response.PokemonList
 import com.ankur_anand.pokedex.utils.Constants.PAGE_SIZE
 import com.ankur_anand.pokedex.utils.capitalizeFirstLetter
 
@@ -65,30 +66,14 @@ class PokedexListRemoteMediator(
                     pokedexListEntryRemoteKeysDao.deleteAllRemoteKeys()
                 }
 
-                val pokedexListEntry = response.results.map { entry ->
-                    val number = if (entry.url.endsWith("/")) {
-                        entry.url.dropLast(1).takeLastWhile { it.isDigit() }
-                    } else {
-                        entry.url.takeLastWhile { it.isDigit() }
-                    }
 
-                    val url =
-                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$number.png"
+                val pokedexListEntry = getPokedexListEntry(results = response.results)
 
-                    PokedexListEntry(
-                        pokemonName = entry.name.capitalizeFirstLetter(),
-                        imageUrl = url,
-                        number = number.toInt()
-                    )
-                }
-
-                val keys = pokedexListEntry.map {
-                    PokedexListRemoteKeys(
-                        id = it.number.toString(),
-                        prevPage = prevPage,
-                        nextPage = nextPage
-                    )
-                }
+                val keys = getPokedexRemoteKeys(
+                    prevPage = prevPage,
+                    nextPage = nextPage,
+                    pokedexListEntry = pokedexListEntry
+                )
 
                 pokedexListEntryRemoteKeysDao.addAllRemoteKeys(remoteKeys = keys)
                 pokedexListEntryDao.addPokemons(pokemon = pokedexListEntry)
@@ -98,6 +83,39 @@ class PokedexListRemoteMediator(
 
         } catch (e: Exception) {
             return MediatorResult.Error(e)
+        }
+    }
+
+    private fun getPokedexRemoteKeys(
+        prevPage: Int?,
+        nextPage: Int?,
+        pokedexListEntry: List<PokedexListEntry>
+    ): List<PokedexListRemoteKeys> {
+        return pokedexListEntry.map {
+            PokedexListRemoteKeys(
+                id = it.number.toString(),
+                prevPage = prevPage,
+                nextPage = nextPage
+            )
+        }
+    }
+
+    private fun getPokedexListEntry(results: List<PokemonList.Result>): List<PokedexListEntry> {
+        return results.map { entry ->
+            val number = if (entry.url.endsWith("/")) {
+                entry.url.dropLast(1).takeLastWhile { it.isDigit() }
+            } else {
+                entry.url.takeLastWhile { it.isDigit() }
+            }
+
+            val url =
+                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$number.png"
+
+            PokedexListEntry(
+                pokemonName = entry.name.capitalizeFirstLetter(),
+                imageUrl = url,
+                number = number.toInt()
+            )
         }
     }
 

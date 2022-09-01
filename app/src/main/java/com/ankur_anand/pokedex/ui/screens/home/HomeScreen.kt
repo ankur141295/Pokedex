@@ -1,8 +1,11 @@
 package com.ankur_anand.pokedex.ui.screens.home
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -20,8 +23,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -39,14 +44,34 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.ankur_anand.pokedex.R
 import com.ankur_anand.pokedex.data.model.PokedexListEntry
+import com.ankur_anand.pokedex.navigation.Screen
+import com.ankur_anand.pokedex.ui.theme.LightLightBlue
 import com.ankur_anand.pokedex.utils.getVerticalGradient
+import com.ankur_anand.pokedex.utils.setHomeStatusBarAndIconColor
+import com.ankur_anand.pokedex.utils.supportsDynamicColor
 
 @Composable
-fun Home(
+fun HomeScreen(
     navController: NavHostController,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    darkTheme: Boolean = isSystemInDarkTheme()
 ) {
     val searchText = viewModel.searchText
+
+    val view = LocalView.current
+
+    if (!view.isInEditMode) {
+        val statusBarColor =
+            if (supportsDynamicColor()) MaterialTheme.colorScheme.background else LightLightBlue
+
+        SideEffect {
+            (view.context as Activity).setHomeStatusBarAndIconColor(
+                view = view,
+                darkTheme = darkTheme,
+                statusBarColor = statusBarColor
+            )
+        }
+    }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -88,6 +113,15 @@ fun PokemonList(
     val pokemonList = viewModel.pokemonData.collectAsLazyPagingItems()
     val searchList = viewModel.searchResult.collectAsStateWithLifecycle()
 
+    val onCardClicked: (PokedexListEntry, Color) -> Unit = { pokemon, dominantColor ->
+        navController.navigate(
+            Screen.DetailScreen.route(
+                pokemonName = pokemon.pokemonName,
+                dominantColor = dominantColor.toArgb()
+            )
+        )
+    }
+
     Column {
         AnimatedVisibility(visible = searchText.text.isBlank()) {
             LazyVerticalGrid(
@@ -96,7 +130,7 @@ fun PokemonList(
             ) {
                 items(count = pokemonList.itemCount, key = { it }) { index ->
                     pokemonList[index]?.let { pokemon ->
-                        PokemonCard(pokemon = pokemon)
+                        PokemonCard(pokemon = pokemon, onClick = onCardClicked)
                     }
                 }
             }
@@ -108,7 +142,7 @@ fun PokemonList(
                 columns = GridCells.Fixed(count = 2)
             ) {
                 items(count = searchList.value.size, key = { it }) { index ->
-                    PokemonCard(pokemon = searchList.value[index])
+                    PokemonCard(pokemon = searchList.value[index], onClick = onCardClicked)
                 }
             }
         }
@@ -119,6 +153,7 @@ fun PokemonList(
 fun PokemonCard(
     modifier: Modifier = Modifier,
     pokemon: PokedexListEntry,
+    onClick: (PokedexListEntry, Color) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val defaultDominantColor = MaterialTheme.colorScheme.surface
@@ -145,6 +180,7 @@ fun PokemonCard(
                 .clip(RoundedCornerShape(10.dp))
                 .aspectRatio(1f)
                 .background(getVerticalGradient(dominantColor = dominantColor))
+                .clickable { onClick(pokemon, dominantColor) }
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),

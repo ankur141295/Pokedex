@@ -11,5 +11,7 @@ object Constants {
     const val POKEMON_LIST_TABLE = "pokemon_list_table"
     const val POKEMON_LIST_REMOTE_KEY_TABLE = "pokemon_list_remote_key_table"
 
+    const val POKEMON_DETAIL_TABLE = "pokemon_detail_table"
+
     const val POKEMON_TABLE = "pokemon_table"
 }

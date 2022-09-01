@@ -7,19 +7,25 @@ import com.ankur_anand.pokedex.data.repository.PokeRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dagger.hilt.android.components.ViewModelComponent
+import dagger.hilt.android.scopes.ViewModelScoped
+import kotlinx.coroutines.CoroutineDispatcher
 
 @Module
-@InstallIn(SingletonComponent::class)
+@InstallIn(ViewModelComponent::class)
 object RepositoryModule {
 
     @Provides
-    @Singleton
+    @ViewModelScoped
     fun providePokemonRepository(
         apiService: ApiService,
-        pokemonDatabase: PokemonDatabase
+        pokemonDatabase: PokemonDatabase,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
     ): PokeRepository {
-        return PokeRepositoryImpl(apiService = apiService, pokemonDatabase = pokemonDatabase)
+        return PokeRepositoryImpl(
+            apiService = apiService,
+            pokemonDatabase = pokemonDatabase,
+            ioDispatcher = ioDispatcher
+        )
     }
 }

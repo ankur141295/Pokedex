@@ -15,6 +15,10 @@ import com.ankur_anand.pokedex.utils.Constants.PAGE_SIZE
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
+import timber.log.Timber
+import java.io.IOException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 @OptIn(ExperimentalPagingApi::class)
@@ -71,7 +75,16 @@ class PokeRepositoryImpl @Inject constructor(
                 return getFailureResponse(message = apiResponse.message())
             }
         } catch (e: Exception) {
-            return getFailureResponse(message = e.message ?: "Something went wrong", exception = e)
+            Timber.e(e)
+
+            val message = when (e) {
+                is HttpException -> "Server Error"
+                is SocketTimeoutException -> "Timeout"
+                is IOException -> "No Internet"
+                else -> e.message ?: "Something went wrong"
+            }
+
+            return getFailureResponse(message = message, exception = e)
         }
     }
 

@@ -1,18 +1,15 @@
 package com.ankur_anand.pokedex.utils
 
+import androidx.room.ProvidedTypeConverter
 import androidx.room.TypeConverter
 import com.ankur_anand.pokedex.data.remote.response.Pokemon.Stat
 import com.ankur_anand.pokedex.data.remote.response.Pokemon.Type
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
-class ObjectTypeConverter {
-
-    private val moshi: Moshi = Moshi
-        .Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
-
+@ProvidedTypeConverter
+class ObjectTypeConverter(
+    private val moshi: Moshi
+) {
 
     @TypeConverter
     fun listOfStatToString(statList: List<Stat>): String {

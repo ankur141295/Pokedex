@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
 import androidx.palette.graphics.Palette
 import com.ankur_anand.pokedex.data.model.PokedexListEntry
 import com.ankur_anand.pokedex.data.repository.PokeRepository
@@ -29,7 +30,7 @@ class HomeViewModel @Inject constructor(
     private val _searchText = mutableStateOf(TextFieldValue(""))
     val searchText: State<TextFieldValue> = _searchText
 
-    var pokemonData = repository.getPokemonList()
+    var pokemonData = repository.getPokemonList().cachedIn(viewModelScope)
 
 /*//    init {
 //        pokemonData = repository.getPokemonList().cachedIn(viewModelScope)
@@ -77,9 +78,9 @@ class HomeViewModel @Inject constructor(
 
     fun setSearchText(searchText: TextFieldValue) {
         _searchText.value = searchText
-        if(_searchText.value.text.isBlank()) {
+        if (_searchText.value.text.isBlank()) {
             _searchResult.value = emptyList()
-        }else{
+        } else {
             getSearchResult()
         }
     }

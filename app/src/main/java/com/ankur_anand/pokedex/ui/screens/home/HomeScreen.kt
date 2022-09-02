@@ -128,7 +128,12 @@ fun PokemonList(
                 modifier = modifier.padding(horizontal = 8.dp),
                 columns = GridCells.Fixed(count = 2)
             ) {
-                items(count = pokemonList.itemCount, key = { it }) { index ->
+                items(
+                    count = pokemonList.itemCount,
+                    key = {
+                        pokemonList[it]?.pokemonName ?: it
+                    }
+                ) { index ->
                     pokemonList[index]?.let { pokemon ->
                         PokemonCard(pokemon = pokemon, onClick = onCardClicked)
                     }
@@ -141,7 +146,10 @@ fun PokemonList(
                 modifier = modifier.padding(horizontal = 8.dp),
                 columns = GridCells.Fixed(count = 2)
             ) {
-                items(count = searchList.value.size, key = { it }) { index ->
+                items(
+                    count = searchList.value.size,
+                    key = { searchList.value[it].number }
+                ) { index ->
                     PokemonCard(pokemon = searchList.value[index], onClick = onCardClicked)
                 }
             }

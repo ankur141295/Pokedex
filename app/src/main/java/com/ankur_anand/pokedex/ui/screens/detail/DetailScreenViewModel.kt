@@ -11,10 +11,7 @@ import com.ankur_anand.pokedex.navigation.NAVIGATION_ARGUMENT_POKEMON_NAME
 import com.ankur_anand.pokedex.utils.ApiResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
-
-private const val TAG = "DetailScreenViewModel"
 
 @HiltViewModel
 class DetailScreenViewModel @Inject constructor(

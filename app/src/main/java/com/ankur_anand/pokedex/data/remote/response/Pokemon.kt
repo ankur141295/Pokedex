@@ -5,13 +5,13 @@ import androidx.room.PrimaryKey
 import com.ankur_anand.pokedex.utils.Constants.POKEMON_DETAIL_TABLE
 import com.squareup.moshi.Json
 
-//@Entity(tableName = POKEMON_DETAIL_TABLE)
+@Entity(tableName = POKEMON_DETAIL_TABLE)
 data class Pokemon(
 
     @Json(name = "height")
     val height: Int,
 
-//    @PrimaryKey(autoGenerate = false)
+    @PrimaryKey(autoGenerate = false)
     @Json(name = "id")
     val id: Int,
 

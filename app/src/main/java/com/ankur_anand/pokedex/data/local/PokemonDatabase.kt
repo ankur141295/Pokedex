@@ -12,14 +12,13 @@ import com.ankur_anand.pokedex.data.remote.response.Pokemon
 import com.ankur_anand.pokedex.utils.ObjectTypeConverter
 
 @Database(
-    entities = [PokedexListEntry::class, PokedexListRemoteKeys::class/*, Pokemon::class*/],
+    entities = [PokedexListEntry::class, PokedexListRemoteKeys::class, Pokemon::class],
     version = 1
 )
-/*@TypeConverters(ObjectTypeConverter::class)*/
+@TypeConverters(ObjectTypeConverter::class)
 abstract class PokemonDatabase : RoomDatabase() {
 
     abstract fun pokedexLisEntrytDao(): PokedexListEntryDao
     abstract fun pokedexListRemoteKeysDao(): PokedexListRemoteKeysDao
- /*   abstract fun pokemonDao(): PokemonDao*/
-
+    abstract fun pokemonDao(): PokemonDao
 }

@@ -44,11 +44,11 @@ class PokeRepositoryImpl @Inject constructor(
 
     override suspend fun getPokemonInfo(pokemonName: String): ApiResponse<Pokemon> {
 
-//        val dbResponse = getPokemonFromDb(pokemonName = pokemonName)
-//
-//        if (dbResponse != null) {
-//            return ApiResponse.Success(data = dbResponse)
-//        }
+        val dbResponse = getPokemonFromDb(pokemonName = pokemonName)
+
+        if (dbResponse != null) {
+            return ApiResponse.Success(data = dbResponse)
+        }
 
         try {
             val apiResponse = apiService.getPokemonInfo(name = pokemonName)
@@ -56,29 +56,40 @@ class PokeRepositoryImpl @Inject constructor(
             if (apiResponse.isSuccessful) {
 
                 apiResponse.body()?.let { pokemon ->
-//                    pokemonDatabase.pokemonDao().addPokemon(pokemon)
+                    pokemonDatabase.pokemonDao().addPokemon(pokemon)
 
-                    return ApiResponse.Success(data = pokemon)
+//                    return ApiResponse.Success(data = pokemon)
 
-//                    val pokemonData = getPokemonFromDb(pokemonName)
-//
-//                    pokemonData?.let {
-//                        return ApiResponse.Success(data = it)
-//                    } ?: return ApiResponse.Error(message = "Something went wrong")
+                    val pokemonData = getPokemonFromDb(pokemonName)
 
-                } ?: return ApiResponse.Error(message = apiResponse.message())
+                    pokemonData?.let {
+                        return getSuccessResponse(pokemon = it)
+                    } ?: return getFailureResponse(message = "Something went wrong")
+
+                } ?: return getFailureResponse(message = apiResponse.message())
             } else {
-                return ApiResponse.Error(message = apiResponse.message())
+                return getFailureResponse(message = apiResponse.message())
             }
         } catch (e: Exception) {
-            return ApiResponse.Error(message = e.message ?: "Something went wrong", exception = e)
+            return getFailureResponse(message = e.message ?: "Something went wrong", exception = e)
         }
     }
 
-//    private suspend fun getPokemonFromDb(pokemonName: String): Pokemon? {
-//        return withContext(ioDispatcher) {
-//            pokemonDatabase.pokemonDao().getPokemon(name = pokemonName)
-//        }
-//    }
+    private suspend fun getPokemonFromDb(pokemonName: String): Pokemon? {
+        return withContext(ioDispatcher) {
+            pokemonDatabase.pokemonDao().getPokemon(name = pokemonName)
+        }
+    }
+
+    private fun getSuccessResponse(pokemon: Pokemon): ApiResponse.Success<Pokemon> {
+        return ApiResponse.Success(data = pokemon)
+    }
+
+    private fun getFailureResponse(
+        message: String,
+        exception: Exception? = null
+    ): ApiResponse.Error {
+        return ApiResponse.Error(message = message, exception = exception)
+    }
 
 }

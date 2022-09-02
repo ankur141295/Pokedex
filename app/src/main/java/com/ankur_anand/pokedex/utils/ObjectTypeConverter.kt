@@ -2,9 +2,7 @@ package com.ankur_anand.pokedex.utils
 
 import androidx.room.TypeConverter
 import com.ankur_anand.pokedex.data.remote.response.Pokemon.Stat
-import com.ankur_anand.pokedex.data.remote.response.Pokemon.Stat.StatX
 import com.ankur_anand.pokedex.data.remote.response.Pokemon.Type
-import com.ankur_anand.pokedex.data.remote.response.Pokemon.Type.TypeX
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
@@ -17,32 +15,69 @@ class ObjectTypeConverter {
 
 
     @TypeConverter
-    fun listOfStatToString(stats: List<Stat>): String =
-        convertObjectToJson(stats, moshi)
+    fun listOfStatToString(statList: List<Stat>): String {
+        if (statList.isEmpty()) {
+            return ""
+        }
+
+        val mappedList: List<String> = statList.map { stat ->
+            convertObjectToJson(stat, moshi)
+        }
+
+        return convertObjectToJson(mappedList, moshi)
+    }
 
     @TypeConverter
-    fun stringToListOfStat(item: String): List<Stat> =
-        convertJsonToObject(item, moshi) ?: emptyList()
+    fun stringToListOfStat(item: String): List<Stat> {
+        if (item.isBlank()) {
+            return emptyList()
+        }
+
+        val listOfString: List<String> = convertJsonToObject(item, moshi) ?: emptyList()
+
+        if (listOfString.isEmpty()) {
+            return emptyList()
+        }
+
+        val mappedList: List<Stat> = listOfString.map { stat ->
+            val statObject: Stat? = convertJsonToObject(stat, moshi)
+            statObject ?: return emptyList()
+        }
+
+        return mappedList
+    }
 
     @TypeConverter
-    fun statXToString(statX: StatX): String = convertObjectToJson(statX, moshi)
+    fun listOfTypeToString(typeList: List<Type>): String {
+        if (typeList.isEmpty()) {
+            return ""
+        }
+
+        val mappedList: List<String> = typeList.map { type ->
+            convertObjectToJson(type, moshi)
+        }
+
+        return convertObjectToJson(mappedList, moshi)
+    }
 
     @TypeConverter
-    fun stringToStatX(item: String): StatX =
-        convertJsonToObject(item, moshi) ?: StatX(name = "", url = "")
+    fun stringToListOfType(item: String): List<Type> {
+        if (item.isBlank()) {
+            return emptyList()
+        }
 
-    @TypeConverter
-    fun listOfTypeToString(types: List<Type>): String =
-        convertObjectToJson(types, moshi)
+        val listOfString: List<String> = convertJsonToObject(item, moshi) ?: emptyList()
 
-    @TypeConverter
-    fun stringToListOfType(item: String): List<Type> =
-        convertJsonToObject(item, moshi) ?: emptyList()
+        if (listOfString.isEmpty()) {
+            return emptyList()
+        }
 
-    @TypeConverter
-    fun typeXToString(typeX: TypeX): String = convertObjectToJson(typeX, moshi)
+        val mappedList: List<Type> = listOfString.map { stat ->
+            val typeObject: Type? = convertJsonToObject(stat, moshi)
+            typeObject ?: return emptyList()
+        }
 
-    @TypeConverter
-    fun stringToTypeX(item: String): TypeX =
-        convertJsonToObject(item, moshi) ?: TypeX(name = "", url = "")
+        return mappedList
+    }
+
 }
